@@ -24,7 +24,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action && typeof action === 'object' && React.isValidElement(action) && action}
             <ToastClose />
           </Toast>
         )
