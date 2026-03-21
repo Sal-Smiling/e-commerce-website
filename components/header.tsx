@@ -13,6 +13,14 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const { itemCount } = useCart()
+  const { user, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/')
+    setIsOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -59,11 +67,22 @@ export function Header() {
               </Button>
             </Link>
 
-            <Link href="/profile">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
+            {user ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title="Sign out"
+              >
+                <LogOut className="h-5 w-5" />
               </Button>
-            </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" size="icon" title="Sign in">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <button
@@ -106,6 +125,33 @@ export function Header() {
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </button>
+            {user && (
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2 text-accent"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            )}
+            {!user && (
+              <>
+                <Link
+                  href="/login"
+                  className="block px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium text-accent font-bold"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         )}
       </nav>

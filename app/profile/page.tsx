@@ -70,10 +70,12 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="border-t border-border pt-6 space-y-3">
-                  <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2">
-                    <Heart className="h-4 w-4" />
-                    Wishlist
-                  </button>
+                  <Link href="/wishlist">
+                    <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      Wishlist
+                    </button>
+                  </Link>
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2">
                     <ShoppingBag className="h-4 w-4" />
                     Order History

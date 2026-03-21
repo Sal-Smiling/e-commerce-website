@@ -6,31 +6,58 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-import { Filter, Search, X, Star } from 'lucide-react'
-import { products, categories, getProducts, type Category } from '@/lib/products'
+import { Filter, Search, X, Heart } from 'lucide-react'
+import { useWishlist } from '@/context/wishlist-context'
+import { useToast } from '@/hooks/use-toast'
+
+const products = [
+  { id: 1, name: 'Neon Dream Tee', price: 24.99, category: 'Premium', tag: 'new', image: 'bg-gradient-to-br from-pink-500 to-purple-600' },
+  { id: 2, name: 'Cyber Classic', price: 22.99, category: 'Essential', tag: 'bestseller', image: 'bg-gradient-to-br from-cyan-500 to-blue-600' },
+  { id: 3, name: 'Electric Vibes', price: 26.99, category: 'Premium', tag: 'trending', image: 'bg-gradient-to-br from-yellow-400 to-orange-500' },
+  { id: 4, name: 'Midnight Glow', price: 24.99, category: 'Essential', tag: null, image: 'bg-gradient-to-br from-indigo-600 to-purple-700' },
+  { id: 5, name: 'Retro Pulse', price: 25.99, category: 'Premium', tag: 'sale', image: 'bg-gradient-to-br from-green-500 to-emerald-600' },
+  { id: 6, name: 'Digital Dawn', price: 23.99, category: 'Essential', tag: 'new', image: 'bg-gradient-to-br from-orange-400 to-red-600' },
+  { id: 7, name: 'Neon Nights', price: 27.99, category: 'Premium', tag: 'trending', image: 'bg-gradient-to-br from-purple-500 to-pink-600' },
+  { id: 8, name: 'Cyber Soul', price: 24.99, category: 'Essential', tag: 'sale', image: 'bg-gradient-to-br from-blue-500 to-cyan-600' },
+]
 
 export default function ShopPage() {
   const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<Category>('All')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('featured')
   const [showFilters, setShowFilters] = useState(false)
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100])
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { toast } = useToast()
 
-  const tags = ['new', 'bestseller', 'trending', 'sale', 'limited']
+  const categories = ['Essential', 'Premium']
+  const tags = ['new', 'bestseller', 'trending', 'sale']
 
   const filteredProducts = useMemo(() => {
-    const filtered = getProducts({
-      category: selectedCategory,
-      tags: selectedTags.length > 0 ? selectedTags : undefined,
-      search: search || undefined,
-      sortBy: sortBy as any,
-    })
+    let result = products
 
-    return filtered.filter(
-      (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
-    )
-  }, [search, selectedCategory, selectedTags, sortBy, priceRange])
+    if (search) {
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+
+    if (selectedCategory) {
+      result = result.filter((p) => p.category === selectedCategory)
+    }
+
+    if (selectedTags.length > 0) {
+      result = result.filter((p) => p.tag && selectedTags.includes(p.tag))
+    }
+
+    if (sortBy === 'price-low') {
+      result.sort((a, b) => a.price - b.price)
+    } else if (sortBy === 'price-high') {
+      result.sort((a, b) => b.price - a.price)
+    }
+
+    return result
+  }, [search, selectedCategory, selectedTags, sortBy])
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -38,8 +65,27 @@ export default function ShopPage() {
     )
   }
 
-  const maxPrice = Math.max(...products.map(p => p.price))
-  const minPrice = Math.min(...products.map(p => p.price))
+  const handleWishlist = (e: React.MouseEvent, product: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id)
+      toast({
+        description: `Removed from wishlist`,
+      })
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+      })
+      toast({
+        description: `Added to wishlist`,
+      })
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,9 +95,9 @@ export default function ShopPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col gap-2">
-              <h1 className="text-4xl font-black">Shop All Drops</h1>
+              <h1 className="text-4xl font-black">Shop All</h1>
               <p className="text-muted-foreground">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} available
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
               </p>
             </div>
 
@@ -73,122 +119,86 @@ export default function ShopPage() {
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest</option>
               </select>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search products by name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-card border-border"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8">
+          {/* Filters and Products */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Filters Sidebar */}
-            <div className={`${showFilters ? 'block' : 'hidden'} md:block md:col-span-1`}>
-              <div className="sticky top-24 space-y-6">
-                {/* Category Filter */}
-                <div className="border border-border rounded-lg p-4 bg-card">
-                  <h3 className="font-semibold mb-4 flex items-center justify-between">
-                    Category
-                    {selectedCategory !== 'All' && (
-                      <button
-                        onClick={() => setSelectedCategory('All')}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </h3>
-                  <div className="space-y-2">
-                    {categories.map((category) => (
-                      <label key={category} className="flex items-center gap-3 cursor-pointer hover:text-accent transition-colors">
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={selectedCategory === category}
-                          onChange={() => setSelectedCategory(category)}
-                          className="w-4 h-4 rounded-full accent-accent"
-                        />
-                        <span className="text-sm">{category}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Range Filter */}
-                <div className="border border-border rounded-lg p-4 bg-card">
-                  <h3 className="font-semibold mb-4 flex items-center justify-between">
-                    Price Range
-                    {(priceRange[0] !== minPrice || priceRange[1] !== maxPrice) && (
-                      <button
-                        onClick={() => setPriceRange([minPrice, maxPrice])}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Reset
-                      </button>
-                    )}
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>${priceRange[0].toFixed(2)}</span>
-                      <span>${priceRange[1].toFixed(2)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={minPrice}
-                      max={maxPrice}
-                      step="1"
-                      value={priceRange[0]}
-                      onChange={(e) => setPriceRange([parseFloat(e.target.value), priceRange[1]])}
-                      className="w-full accent-accent"
-                    />
-                    <input
-                      type="range"
-                      min={minPrice}
-                      max={maxPrice}
-                      step="1"
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([priceRange[0], parseFloat(e.target.value)])}
-                      className="w-full accent-accent"
-                    />
-                  </div>
-                </div>
-
-                {/* Tags Filter */}
-                <div className="border border-border rounded-lg p-4 bg-card">
-                  <h3 className="font-semibold mb-4 flex items-center justify-between">
-                    Collections
-                    {selectedTags.length > 0 && (
-                      <button
-                        onClick={() => setSelectedTags([])}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </h3>
-                  <div className="space-y-2">
-                    {tags.map((tag) => (
-                      <label key={tag} className="flex items-center gap-3 cursor-pointer hover:text-accent transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={selectedTags.includes(tag)}
-                          onChange={() => toggleTag(tag)}
-                          className="w-4 h-4 rounded accent-accent"
-                        />
-                        <span className="text-sm capitalize">{tag}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+            <div
+              className={`md:col-span-1 ${
+                showFilters ? 'block' : 'hidden'
+              } md:block space-y-6 p-4 md:p-0 border border-border md:border-0 rounded-lg md:rounded-none`}
+            >
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 bg-background border-border"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-3"
+                  >
+                    <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                  </button>
+                )}
               </div>
+
+              {/* Categories */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-sm">Category</h3>
+                {categories.map((cat) => (
+                  <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategory === cat}
+                      onChange={() =>
+                        setSelectedCategory(selectedCategory === cat ? null : cat)
+                      }
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm">{cat}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Tags/Filters */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-sm">Collections</h3>
+                {tags.map((tag) => (
+                  <label key={tag} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedTags.includes(tag)}
+                      onChange={() => toggleTag(tag)}
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm capitalize">{tag}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Clear Filters */}
+              {(search || selectedCategory || selectedTags.length > 0) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('')
+                    setSelectedCategory(null)
+                    setSelectedTags([])
+                  }}
+                  className="w-full"
+                >
+                  Clear All
+                </Button>
+              )}
             </div>
 
             {/* Products Grid */}
@@ -197,54 +207,34 @@ export default function ShopPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {filteredProducts.map((product) => (
                     <Link key={product.id} href={`/shop/${product.id}`}>
-                      <Card className="group cursor-pointer overflow-hidden border-0 bg-card hover:shadow-lg transition-all duration-300 hover:scale-105">
+                      <Card className="group cursor-pointer overflow-hidden border-0 bg-card hover:shadow-lg transition-all duration-300 hover:scale-105 relative">
                         <div className="relative">
-                          <div className={`${product.image} aspect-square flex items-center justify-center relative`}>
-                            {!product.inStock && (
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <span className="text-white font-bold">Out of Stock</span>
-                              </div>
-                            )}
-                          </div>
-                          {product.tags.length > 0 && (
-                            <div className="absolute top-2 right-2 flex flex-col gap-1">
-                              {product.tags.slice(0, 2).map((tag) => (
-                                <div key={tag} className="px-2 py-1 bg-black/70 backdrop-blur rounded text-xs font-bold text-white capitalize">
-                                  {tag}
-                                </div>
-                              ))}
+                          <div className={`${product.image} aspect-square flex items-center justify-center`} />
+                          {product.tag && (
+                            <div className="absolute top-2 left-2 px-2 py-1 bg-black/70 backdrop-blur rounded text-xs font-bold text-white capitalize">
+                              {product.tag}
                             </div>
                           )}
+                          <button
+                            onClick={(e) => handleWishlist(e, product)}
+                            className="absolute top-2 right-2 p-2 rounded-full bg-black/70 backdrop-blur hover:bg-black/90 transition-colors"
+                          >
+                            <Heart
+                              className={`h-4 w-4 ${
+                                isInWishlist(product.id)
+                                  ? 'fill-red-500 text-red-500'
+                                  : 'text-white'
+                              }`}
+                            />
+                          </button>
                         </div>
-                        <div className="p-4 flex flex-col gap-3">
-                          <div className="flex items-center gap-1">
-                            <div className="flex gap-0.5">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-3 w-3 ${
-                                    i < Math.floor(product.rating)
-                                      ? 'fill-accent text-accent'
-                                      : 'text-muted-foreground'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs text-muted-foreground">({product.reviews})</span>
-                          </div>
+                        <div className="p-4 flex flex-col gap-2">
                           <h3 className="font-bold text-sm md:text-base group-hover:text-accent transition-colors line-clamp-2">
                             {product.name}
                           </h3>
-                          <div className="flex items-center gap-2">
-                            <p className="text-accent font-bold text-sm md:text-base">
-                              ${product.price.toFixed(2)}
-                            </p>
-                            {product.originalPrice && (
-                              <p className="text-muted-foreground line-through text-xs">
-                                ${product.originalPrice.toFixed(2)}
-                              </p>
-                            )}
-                          </div>
+                          <p className="text-accent font-bold text-sm md:text-base">
+                            ${product.price.toFixed(2)}
+                          </p>
                         </div>
                       </Card>
                     </Link>
@@ -252,17 +242,16 @@ export default function ShopPage() {
                 </div>
               ) : (
                 <div className="col-span-3 flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-lg text-muted-foreground mb-4">No products match your filters</p>
+                  <p className="text-lg text-muted-foreground mb-4">No products found</p>
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSearch('')
-                      setSelectedCategory('All')
+                      setSelectedCategory(null)
                       setSelectedTags([])
-                      setPriceRange([minPrice, maxPrice])
                     }}
                   >
-                    Clear All Filters
+                    Clear Filters
                   </Button>
                 </div>
               )}

@@ -1,49 +1,68 @@
 'use client'
 
 import Link from 'next/link'
+import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { BarChart3, Package, ShoppingCart, Users, TrendingUp, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/context/auth-context'
+import { useRouter } from 'next/navigation'
+import { Package, ShoppingCart, Users, TrendingUp, LogOut, Plus } from 'lucide-react'
+import { useState } from 'react'
 
 export default function AdminDashboard() {
+  const { user, logout } = useAuth()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState('overview')
+
+  const handleLogout = () => {
+    logout()
+    router.push('/')
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-black">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Sign in to access admin features</p>
+            <Link href="/login">
+              <Button className="bg-accent hover:bg-accent/90 text-white">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   const stats = [
     { label: 'Total Revenue', value: '$12,450.50', change: '+12.5%', icon: TrendingUp },
     { label: 'Total Orders', value: '248', change: '+8.2%', icon: ShoppingCart },
-    { label: 'Products', value: '12', change: '0%', icon: Package },
-    { label: 'Customers', value: '184', change: '+5.3%', icon: Users },
+    { label: 'Products', value: '48', change: '+3', icon: Package },
+    { label: 'Customers', value: '1,240', change: '+5.3%', icon: Users },
   ]
 
   const recentOrders = [
-    { id: 'ORD-001', customer: 'John Doe', amount: '$47.98', status: 'Processing', date: 'Today' },
-    { id: 'ORD-002', customer: 'Jane Smith', amount: '$73.97', status: 'Shipped', date: 'Yesterday' },
-    { id: 'ORD-003', customer: 'Alex Johnson', amount: '$24.99', status: 'Delivered', date: '2 days ago' },
-    { id: 'ORD-004', customer: 'Sarah Williams', amount: '$99.97', status: 'Processing', date: '3 days ago' },
+    { id: 'ORD-001', customer: 'John Doe', amount: '$47.98', status: 'completed', date: 'Today' },
+    { id: 'ORD-002', customer: 'Jane Smith', amount: '$73.97', status: 'pending', date: 'Yesterday' },
+    { id: 'ORD-003', customer: 'Alex Johnson', amount: '$24.99', status: 'completed', date: '2 days ago' },
+    { id: 'ORD-004', customer: 'Sarah Williams', amount: '$99.97', status: 'pending', date: '3 days ago' },
   ]
 
   const topProducts = [
-    { id: 1, name: 'Neon Dream Tee', sales: 89, revenue: '$2,224.11' },
-    { id: 2, name: 'Cyber Classic', sales: 76, revenue: '$1,747.24' },
-    { id: 3, name: 'Neon Nights', sales: 62, revenue: '$1,735.38' },
-    { id: 4, name: 'Electric Vibes', sales: 44, revenue: '$1,187.56' },
+    { id: 1, name: 'Neon Dream Tee', sales: 234, revenue: '$5,811.66' },
+    { id: 2, name: 'Cyber Classic', sales: 189, revenue: '$4,345.11' },
+    { id: 3, name: 'Electric Vibes', sales: 156, revenue: '$4,210.44' },
   ]
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Admin Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <h1 className="text-2xl font-black">Admin Dashboard</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/admin/products">Products</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/admin/orders">Orders</Link>
-            </Button>
-            <Button variant="outline">Logout</Button>
-          </div>
-        </div>
-      </header>
+      <Header />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Stats Grid */}
