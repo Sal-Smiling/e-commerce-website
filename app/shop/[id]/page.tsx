@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useCart } from '@/context/cart-context'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, use } from 'react'
 import { ShoppingCart, Heart, Share2, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -53,7 +53,8 @@ const products: Record<string, any> = {
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
-  const product = products[params.id] || products['1']
+  const { id } = use(params)
+  const product = products[id] || products['1']
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState(product.colors[0])
   const [quantity, setQuantity] = useState(1)
@@ -78,10 +79,6 @@ export default function ProductPage({ params }: ProductPageProps) {
     setIsAdded(true)
     toast({
       description: `${product.name} added to cart!`,
-      action: {
-        label: 'View Cart',
-        onClick: () => router.push('/cart'),
-      },
     })
 
     setTimeout(() => setIsAdded(false), 2000)
