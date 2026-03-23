@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Menu, X, Moon, Sun, ShoppingCart, User, LogOut } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/context/cart-context'
 import { useAuth } from '@/context/auth-context'
@@ -11,10 +11,15 @@ import { useRouter } from 'next/navigation'
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
   const { itemCount } = useCart()
   const { user, logout } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -47,14 +52,16 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="hidden sm:flex"
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="hidden sm:flex"
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+            )}
 
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative">
@@ -115,16 +122,18 @@ export function Header() {
             >
               Contact
             </Link>
-            <button
-              onClick={() => {
-                setTheme(theme === 'dark' ? 'light' : 'dark')
-                setIsOpen(false)
-              }}
-              className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </button>
+            {mounted && (
+              <button
+                onClick={() => {
+                  setTheme(theme === 'dark' ? 'light' : 'dark')
+                  setIsOpen(false)
+                }}
+                className="w-full text-left px-4 py-2 rounded-lg hover:bg-secondary transition-colors text-sm font-medium flex items-center gap-2"
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </button>
+            )}
             {user && (
               <button
                 onClick={handleLogout}

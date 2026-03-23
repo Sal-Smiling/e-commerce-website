@@ -23,8 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount - only on client
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsLoading(false)
+      return
+    }
+    
     const saved = localStorage.getItem('user')
     if (saved) {
       try {
